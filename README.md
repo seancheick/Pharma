@@ -82,4 +82,5 @@ src/
 - The app uses a medical-themed UI with specific color codes
 - All components are built using NativeBase for consistent styling
 - Mock data is provided for demonstration purposes
-- The app is designed to work on both iOS and Android platforms 
+- The app is designed to work on both iOS and Android platforms # Pharma
+Ai Pharmacist
