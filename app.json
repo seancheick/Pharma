@@ -24,6 +24,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "fonts": {
+      "body": {
+        "normal": "./assets/fonts/Inter-Regular.ttf",
+        "medium": "./assets/fonts/Inter-Medium.ttf",
+        "bold": "./assets/fonts/Inter-Bold.ttf"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

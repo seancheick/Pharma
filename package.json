@@ -9,10 +9,12 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.1",
     "@gluestack-ui/themed-native-base": "^0.1.108",
     "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
     "expo": "~50.0.5",
+    "expo-font": "~11.10.3",
     "lucide-react-native": "^0.323.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   VStack,
@@ -15,16 +15,35 @@ import {
   Badge,
   Avatar,
   ScrollView,
-} from '@gluestack-ui/themed-native-base';
-import { Edit, Trash2 } from 'lucide-react-native';
-import { mockData } from '../data/mockData';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Switch, Alert } from 'react-native';
+} from "@gluestack-ui/themed-native-base";
+import {
+  Edit,
+  Trash2,
+  ArrowLeft,
+  ChevronDown,
+  Plus,
+  X,
+} from "lucide-react-native";
+import { mockData } from "../data/mockData";
+import Animated, { FadeIn } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Switch, Alert } from "react-native";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
+// Helper function to chunk array into groups of 4
+const chunkArray = (arr, size) => {
+  if (!Array.isArray(arr)) return [];
+  return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+};
+
 const GENDERS = ["Female", "Male", "Other"];
+
+// Helper to filter out empty/falsy tags
+const filterValidTags = (arr) =>
+  Array.isArray(arr) ? arr.filter((t) => t && t.trim()) : [];
 
 export const ProfileScreen = () => {
   const { colors } = useTheme();
@@ -37,23 +56,29 @@ export const ProfileScreen = () => {
   const [editGoals, setEditGoals] = useState(user.goals);
   const [editConditions, setEditConditions] = useState(user.conditions);
   const [editGender, setEditGender] = useState(user.sex);
-  const [goalSearch, setGoalSearch] = useState('');
-  const [conditionSearch, setConditionSearch] = useState('');
-  const [customGoal, setCustomGoal] = useState('');
-  const [customCondition, setCustomCondition] = useState('');
-  const [allergies, setAllergies] = useState(['Iodine']);
+  const [goalSearch, setGoalSearch] = useState("");
+  const [conditionSearch, setConditionSearch] = useState("");
+  const [customGoal, setCustomGoal] = useState("");
+  const [customCondition, setCustomCondition] = useState("");
+  const [allergies, setAllergies] = useState(
+    mockData.user.allergies || ["Iodine"]
+  );
   const [showAddAllergy, setShowAddAllergy] = useState(false);
-  const [newAllergy, setNewAllergy] = useState('');
+  const [newAllergy, setNewAllergy] = useState("");
   const [editMedModal, setEditMedModal] = useState(false);
   const [editMedIndex, setEditMedIndex] = useState(null);
-  const [editMedName, setEditMedName] = useState('');
-  const [editMedDosage, setEditMedDosage] = useState('');
-  const [editMedType, setEditMedType] = useState('Prescription');
-  const [editMedStatus, setEditMedStatus] = useState('Active');
-  const [editMedStart, setEditMedStart] = useState('');
-  const [editMedEnd, setEditMedEnd] = useState('');
+  const [editMedName, setEditMedName] = useState("");
+  const [editMedDosage, setEditMedDosage] = useState("");
+  const [editMedType, setEditMedType] = useState("Prescription");
+  const [editMedStatus, setEditMedStatus] = useState("Active");
+  const [editMedStart, setEditMedStart] = useState("");
+  const [editMedEnd, setEditMedEnd] = useState("");
   const [deleteMedIndex, setDeleteMedIndex] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
+  const [showMoreGoals, setShowMoreGoals] = useState(false);
+  const [showMoreConditions, setShowMoreConditions] = useState(false);
+  const [showMoreAllergies, setShowMoreAllergies] = useState(false);
 
   const toggleGoal = (goal) => {
     setEditGoals((prev) =>
@@ -69,24 +94,24 @@ export const ProfileScreen = () => {
   const addCustomGoal = () => {
     if (customGoal && !editGoals.includes(customGoal)) {
       setEditGoals([...editGoals, customGoal]);
-      setCustomGoal('');
+      setCustomGoal("");
     }
   };
   const addCustomCondition = () => {
     if (customCondition && !editConditions.includes(customCondition)) {
       setEditConditions([...editConditions, customCondition]);
-      setCustomCondition('');
+      setCustomCondition("");
     }
   };
   const addAllergy = () => {
     if (newAllergy && !allergies.includes(newAllergy)) {
       setAllergies([...allergies, newAllergy]);
-      setNewAllergy('');
+      setNewAllergy("");
       setShowAddAllergy(false);
     }
   };
   const removeAllergy = (allergy) => {
-    setAllergies(allergies.filter(a => a !== allergy));
+    setAllergies(allergies.filter((a) => a !== allergy));
   };
 
   const openEditMed = (item, idx) => {
@@ -96,7 +121,7 @@ export const ProfileScreen = () => {
     setEditMedType(item.type);
     setEditMedStatus(item.status);
     setEditMedStart(item.start);
-    setEditMedEnd(item.end || '');
+    setEditMedEnd(item.end || "");
     setEditMedModal(true);
   };
   const saveEditMed = () => {
@@ -123,7 +148,6 @@ export const ProfileScreen = () => {
     setShowDeleteConfirm(false);
     setDeleteMedIndex(null);
   };
-
   const renderProfileHeader = () => (
     <AnimatedBox
       entering={FadeIn}
@@ -137,24 +161,26 @@ export const ProfileScreen = () => {
         <Avatar
           size="sm"
           source={{ uri: user?.photo }}
-          alt={user?.name || 'Guest'}
+          alt={user?.name || "Guest"}
         >
-          {(!user || !user.photo) && <Avatar.FallbackText>G</Avatar.FallbackText>}
+          {(!user || !user.photo) && (
+            <Avatar.FallbackText>G</Avatar.FallbackText>
+          )}
         </Avatar>
         <VStack flex={1} space={1}>
           <Text fontSize="sm" fontWeight="bold" numberOfLines={1}>
-            {privateMode ? 'Private' : user?.name || 'Guest'}
+            {privateMode ? "Private" : user?.name || "Guest"}
           </Text>
           <Text color="gray.600" fontSize="sm">
-            Age: {privateMode ? '--' : user?.age || '--'}
+            Age: {privateMode ? "--" : user?.age || "--"}
           </Text>
           <Text color="gray.600" fontSize="sm">
-            {privateMode ? '' : user?.sex || ''}
+            {privateMode ? "" : user?.sex || ""}
           </Text>
         </VStack>
         <Button
           leftIcon={<Edit color={colors.white} size={20} />}
-          onPress={() => setShowEditProfile(true)}
+          onPress={openEditProfile}
           rounded="full"
           px={4}
           py={2}
@@ -163,24 +189,84 @@ export const ProfileScreen = () => {
           Edit Profile
         </Button>
       </HStack>
+
+      {/* Health Goals Section */}
       <VStack mt={4} space={2}>
         <Text fontWeight="bold">Health Goals:</Text>
-        <HStack flexWrap="wrap" space={2}>
-          {(privateMode ? [] : user?.goals)?.map((goal, index) => (
-            <Badge key={index} bg="primary.50" px={3} py={1} rounded="full" mb={1}>
-              <Text color="primary.500">{goal}</Text>
-            </Badge>
-          ))}
+        <HStack flexWrap="wrap">
+          {filterValidTags(privateMode ? [] : user?.goals).map(
+            (goal, index) => (
+              <Badge
+                key={`goal-${index}`}
+                bg="blue.100"
+                rounded="full"
+                m={1}
+                _text={{ color: "blue.800" }}
+              >
+                {goal}
+              </Badge>
+            )
+          )}
+          {!privateMode &&
+            (!user?.goals || filterValidTags(user.goals).length === 0) && (
+              <Text color="gray.500" fontSize="sm">
+                No health goals added
+              </Text>
+            )}
         </HStack>
       </VStack>
-      <VStack mt={2} space={2}>
+
+      {/* Health Conditions Section */}
+      <VStack mt={4} space={2}>
         <Text fontWeight="bold">Health Conditions:</Text>
-        <HStack flexWrap="wrap" space={2}>
-          {(privateMode ? [] : user?.conditions)?.map((condition, index) => (
-            <Badge key={index} bg="warning.50" px={3} py={1} rounded="full" mb={1}>
-              <Text color="warning.500">{condition}</Text>
-            </Badge>
-          ))}
+        <HStack flexWrap="wrap">
+          {filterValidTags(privateMode ? [] : user?.conditions).map(
+            (condition, index) => (
+              <Badge
+                key={`cond-${index}`}
+                bg="orange.100"
+                rounded="full"
+                m={1}
+                _text={{ color: "orange.800" }}
+              >
+                {condition}
+              </Badge>
+            )
+          )}
+          {!privateMode &&
+            (!user?.conditions ||
+              filterValidTags(user.conditions).length === 0) && (
+              <Text color="gray.500" fontSize="sm">
+                No health conditions added
+              </Text>
+            )}
+        </HStack>
+      </VStack>
+
+      {/* Allergies Section */}
+      <VStack mt={4} space={2}>
+        <Text fontWeight="bold">Allergies:</Text>
+        <HStack flexWrap="wrap">
+          {filterValidTags(privateMode ? [] : user?.allergies).map(
+            (allergy, index) => (
+              <Badge
+                key={`allergy-${index}`}
+                bg="red.100"
+                rounded="full"
+                m={1}
+                _text={{ color: "red.800" }}
+              >
+                {allergy}
+              </Badge>
+            )
+          )}
+          {!privateMode &&
+            (!user?.allergies ||
+              filterValidTags(user.allergies).length === 0) && (
+              <Text color="gray.500" fontSize="sm">
+                No allergies added
+              </Text>
+            )}
         </HStack>
       </VStack>
     </AnimatedBox>
@@ -200,15 +286,45 @@ export const ProfileScreen = () => {
           <Text fontSize="md" fontWeight="bold">
             {item.name}
           </Text>
-          <Text color="gray.600" fontSize="sm">Dosage: {item.dosage}</Text>
-          <Text color="gray.600" fontSize="xs">Start: {item.start}</Text>
-          {item.end && <Text color="gray.600" fontSize="xs">End: {item.end}</Text>}
+          <Text color="gray.600" fontSize="sm">
+            Dosage: {item.dosage}
+          </Text>
+          <Text color="gray.600" fontSize="xs">
+            Start: {item.start}
+          </Text>
+          {item.end && (
+            <Text color="gray.600" fontSize="xs">
+              End: {item.end}
+            </Text>
+          )}
           <HStack space={1} mt={1}>
-            <Badge bg={item.type === 'Prescription' ? 'primary.50' : 'warning.50'} px={2} py={0.5} rounded="full">
-              <Text color={item.type === 'Prescription' ? 'primary.500' : 'warning.500'} fontSize="xs">{item.type}</Text>
+            <Badge
+              bg={item.type === "Prescription" ? "primary.50" : "warning.50"}
+              px={2}
+              py={0.5}
+              rounded="full"
+            >
+              <Text
+                color={
+                  item.type === "Prescription" ? "primary.500" : "warning.500"
+                }
+                fontSize="xs"
+              >
+                {item.type}
+              </Text>
             </Badge>
-            <Badge bg={item.status === 'Active' ? 'success.50' : 'gray.100'} px={2} py={0.5} rounded="full">
-              <Text color={item.status === 'Active' ? 'success.500' : 'gray.500'} fontSize="xs">{item.status}</Text>
+            <Badge
+              bg={item.status === "Active" ? "success.50" : "gray.100"}
+              px={2}
+              py={0.5}
+              rounded="full"
+            >
+              <Text
+                color={item.status === "Active" ? "success.500" : "gray.500"}
+                fontSize="xs"
+              >
+                {item.status}
+              </Text>
             </Badge>
           </HStack>
         </VStack>
@@ -233,194 +349,352 @@ export const ProfileScreen = () => {
   );
 
   const renderEditProfileModal = () => (
-    <Modal isOpen={showEditProfile} onClose={() => setShowEditProfile(false)} size="full">
-      <Modal.Content>
-        <Modal.CloseButton />
-        <Modal.Header>Edit Profile</Modal.Header>
-        <Modal.Body>
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <VStack space={4}>
-              <FormControl>
-                <FormControl.Label>Name</FormControl.Label>
-                <Input value={editName} onChangeText={setEditName} isDisabled={privateMode} />
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Age</FormControl.Label>
-                <Input value={editAge} onChangeText={setEditAge} keyboardType="number-pad" isDisabled={privateMode} />
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Sex</FormControl.Label>
-                <HStack space={2} mt={2}>
-                  {GENDERS.map((gender, idx) => (
-                    <Pressable
-                      key={idx}
-                      onPress={() => setEditGender(gender)}
-                      style={{
-                        backgroundColor: editGender === gender ? colors.primary[100] : 'white',
-                        borderRadius: 16,
-                        borderWidth: editGender === gender ? 2 : 1,
-                        borderColor: editGender === gender ? colors.primary[500] : colors.gray[200],
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        marginRight: 4,
-                        opacity: privateMode ? 0.5 : 1,
-                      }}
-                      disabled={privateMode}
-                    >
-                      <Text color={editGender === gender ? colors.primary[700] : colors.gray[700]} fontWeight={editGender === gender ? 'bold' : 'normal'}>
-                        {gender}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </HStack>
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Health Goals</FormControl.Label>
-                <Input
-                  placeholder="Browse common..."
-                  value={goalSearch}
-                  onChangeText={setGoalSearch}
-                  isDisabled={privateMode}
-                />
-                <HStack flexWrap="wrap" space={2} mt={2}>
-                  {mockData.common_goals.filter(goal => goal.toLowerCase().includes(goalSearch.toLowerCase())).map((goal, idx) => (
-                    <Pressable
-                      key={idx}
-                      onPress={() => !privateMode && toggleGoal(goal)}
-                      style={{ opacity: editGoals.includes(goal) ? 1 : 0.5 }}
-                      disabled={privateMode}
-                    >
-                      <Badge bg="primary.50" px={3} py={1} rounded="full" mb={1} borderWidth={editGoals.includes(goal) ? 2 : 0} borderColor="primary.500">
-                        <Text color="primary.500">{goal}</Text>
-                      </Badge>
-                    </Pressable>
-                  ))}
-                </HStack>
-                <HStack flexWrap="wrap" space={2} mt={2}>
-                  {editGoals.map((goal, idx) => (
-                    <Badge key={idx} bg="primary.100" px={3} py={1} rounded="full" mb={1}>
-                      <Text color="primary.700">{goal}</Text>
-                    </Badge>
-                  ))}
-                </HStack>
-                <HStack mt={2} space={2} alignItems="center">
+    <Modal
+      isOpen={showEditProfile}
+      onClose={() => setShowEditProfile(false)}
+      size="full"
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <Modal.Content
+          flex={1}
+          width="100%"
+          marginTop={0}
+          marginBottom={0}
+          entering={FadeIn}
+          bg="white"
+          rounded="2xl"
+        >
+          <IconButton
+            position="absolute"
+            left={2}
+            top={2}
+            zIndex={1}
+            icon={<ArrowLeft color={colors.gray[600]} size={24} />}
+            onPress={() => setShowEditProfile(false)}
+          />
+          <Modal.Header alignItems="center" justifyContent="center">
+            Edit Profile
+          </Modal.Header>
+          <Modal.Body flex={1}>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <VStack space={4} px={4}>
+                {/* Name Input */}
+                <FormControl>
+                  <FormControl.Label>Name</FormControl.Label>
                   <Input
-                    flex={1}
-                    placeholder="Other (add custom goal)"
-                    value={customGoal}
-                    onChangeText={setCustomGoal}
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder="Enter your name"
+                    fontSize="md"
                     isDisabled={privateMode}
                   />
-                  <Button size="sm" onPress={addCustomGoal} isDisabled={privateMode || !customGoal}>Add</Button>
-                </HStack>
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Health Conditions</FormControl.Label>
-                <Input
-                  placeholder="Browse common..."
-                  value={conditionSearch}
-                  onChangeText={setConditionSearch}
-                  isDisabled={privateMode}
-                />
-                <HStack flexWrap="wrap" space={2} mt={2}>
-                  {mockData.common_conditions.filter(cond => cond.toLowerCase().includes(conditionSearch.toLowerCase())).map((cond, idx) => (
-                    <Pressable
-                      key={idx}
-                      onPress={() => !privateMode && toggleCondition(cond)}
-                      style={{ opacity: editConditions.includes(cond) ? 1 : 0.5 }}
-                      disabled={privateMode}
-                    >
-                      <Badge bg="warning.50" px={3} py={1} rounded="full" mb={1} borderWidth={editConditions.includes(cond) ? 2 : 0} borderColor="warning.500">
-                        <Text color="warning.500">{cond}</Text>
-                      </Badge>
-                    </Pressable>
-                  ))}
-                </HStack>
-                <HStack flexWrap="wrap" space={2} mt={2}>
-                  {editConditions.map((cond, idx) => (
-                    <Badge key={idx} bg="warning.100" px={3} py={1} rounded="full" mb={1}>
-                      <Text color="warning.700">{cond}</Text>
-                    </Badge>
-                  ))}
-                </HStack>
-                <HStack mt={2} space={2} alignItems="center">
+                </FormControl>
+
+                {/* Age Input */}
+                <FormControl>
+                  <FormControl.Label>Age</FormControl.Label>
                   <Input
-                    flex={1}
-                    placeholder="Other (add custom condition)"
-                    value={customCondition}
-                    onChangeText={setCustomCondition}
+                    value={editAge}
+                    onChangeText={setEditAge}
+                    keyboardType="number-pad"
+                    placeholder="Enter your age"
+                    fontSize="md"
                     isDisabled={privateMode}
                   />
-                  <Button size="sm" onPress={addCustomCondition} isDisabled={privateMode || !customCondition}>Add</Button>
-                </HStack>
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Known Allergies</FormControl.Label>
-                <HStack flexWrap="wrap" space={2} mt={2}>
-                  {allergies.map((allergy, idx) => (
-                    <Badge key={idx} bg="danger.50" px={3} py={1} rounded="full" mb={1}>
-                      <HStack alignItems="center" space={1}>
-                        <Text color="danger.700">{allergy}</Text>
-                        <Pressable onPress={() => removeAllergy(allergy)} disabled={privateMode}>
-                          <Text color="danger.700">×</Text>
-                        </Pressable>
+                </FormControl>
+
+                {/* Biological Sex Dropdown */}
+                <FormControl>
+                  <FormControl.Label>Biological Sex</FormControl.Label>
+                  <Pressable
+                    onPress={() => !privateMode && setShowGenderDropdown(true)}
+                    disabled={privateMode}
+                  >
+                    <Box
+                      borderWidth={1}
+                      borderColor="gray.200"
+                      rounded="lg"
+                      px={4}
+                      py={3}
+                      opacity={privateMode ? 0.5 : 1}
+                    >
+                      <HStack
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Text color={editGender ? "gray.800" : "gray.400"}>
+                          {editGender || "Select"}
+                        </Text>
+                        <ChevronDown size={20} color={colors.gray[400]} />
                       </HStack>
-                    </Badge>
-                  ))}
-                </HStack>
-                {showAddAllergy ? (
-                  <HStack mt={2} space={2} alignItems="center">
-                    <Input
-                      flex={1}
-                      placeholder="Add allergy"
-                      value={newAllergy}
-                      onChangeText={setNewAllergy}
-                      isDisabled={privateMode}
-                    />
-                    <Button size="sm" onPress={addAllergy} isDisabled={privateMode || !newAllergy}>Add</Button>
-                    <Button size="sm" variant="outline" onPress={() => setShowAddAllergy(false)}>Cancel</Button>
-                  </HStack>
-                ) : (
-                  <Button mt={2} size="sm" onPress={() => setShowAddAllergy(true)} isDisabled={privateMode}>Add</Button>
-                )}
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Guest Mode</FormControl.Label>
-                <HStack alignItems="center" space={2}>
-                  <Switch
-                    value={privateMode}
-                    onValueChange={setPrivateMode}
-                    trackColor={{ false: colors.gray[200], true: colors.info[50] }}
-                    thumbColor={privateMode ? colors.info[100] : colors.gray[400]}
+                    </Box>
+                  </Pressable>
+                  <Modal
+                    isOpen={showGenderDropdown}
+                    onClose={() => setShowGenderDropdown(false)}
+                  >
+                    <Modal.Content>
+                      <Modal.Header>Select Biological Sex</Modal.Header>
+                      <Modal.Body>
+                        <VStack space={2}>
+                          {GENDERS.map((gender) => (
+                            <Pressable
+                              key={gender}
+                              onPress={() => {
+                                setEditGender(gender);
+                                setShowGenderDropdown(false);
+                              }}
+                            >
+                              <Box
+                                py={3}
+                                px={4}
+                                bg={
+                                  editGender === gender ? "primary.50" : "white"
+                                }
+                              >
+                                <Text
+                                  color={
+                                    editGender === gender
+                                      ? "primary.600"
+                                      : "gray.800"
+                                  }
+                                >
+                                  {gender}
+                                </Text>
+                              </Box>
+                            </Pressable>
+                          ))}
+                        </VStack>
+                      </Modal.Body>
+                    </Modal.Content>
+                  </Modal>
+                </FormControl>
+
+                {/* Health Goals Section */}
+                <FormControl>
+                  <FormControl.Label>Health Goals</FormControl.Label>
+                  <Input
+                    value={goalSearch}
+                    onChangeText={setGoalSearch}
+                    placeholder="Type and press Enter to add..."
+                    isDisabled={privateMode}
+                    onSubmitEditing={() => {
+                      const val = goalSearch.trim();
+                      if (val && !editGoals.includes(val)) {
+                        setEditGoals([...editGoals, val]);
+                      }
+                      setGoalSearch("");
+                    }}
+                    returnKeyType="done"
                   />
-                  <Text color={privateMode ? colors.primary[500] : colors.gray[700]}>{privateMode ? 'On' : 'Off'}</Text>
-                </HStack>
-                <Text color="gray.500" fontSize="xs">Guest mode allows you to use the app without creating an account. Your data stays on your device and is not synced to the cloud.</Text>
-              </FormControl>
-            </VStack>
-          </ScrollView>
-        </Modal.Body>
-        <Modal.Footer>
-          <HStack space={2}>
-            <Button flex={1} bg="#8E8E93" onPress={() => setShowEditProfile(false)}>
-              Cancel
-            </Button>
-            <Button flex={1} bg="#007AFF" onPress={() => {
-              setUser({
-                ...user,
-                name: editName,
-                age: parseInt(editAge, 10),
-                goals: editGoals,
-                conditions: editConditions,
-                sex: editGender,
-              });
-              setShowEditProfile(false);
-            }} isDisabled={privateMode}>
-              Save
-            </Button>
-          </HStack>
-        </Modal.Footer>
-      </Modal.Content>
+                  {/* Suggestions */}
+                  {goalSearch && (
+                    <Box mt={2} maxH={100} overflow="hidden">
+                      <ScrollView>
+                        {mockData.commonGoals
+                          .filter(
+                            (goal) =>
+                              goal
+                                .toLowerCase()
+                                .includes(goalSearch.toLowerCase()) &&
+                              !editGoals.includes(goal)
+                          )
+                          .map((goal) => (
+                            <Pressable
+                              key={goal}
+                              onPress={() => {
+                                setEditGoals([...editGoals, goal]);
+                                setGoalSearch("");
+                              }}
+                              p={2}
+                              borderBottomWidth={1}
+                              borderColor="gray.100"
+                            >
+                              <Text>{goal}</Text>
+                            </Pressable>
+                          ))}
+                      </ScrollView>
+                    </Box>
+                  )}
+                  {/* Chips */}
+                  <HStack flexWrap="wrap" mt={2}>
+                    {filterValidTags(editGoals).map((goal) => (
+                      <Badge
+                        key={goal}
+                        bg="blue.100"
+                        px={2}
+                        py={1}
+                        rounded="full"
+                        m={1}
+                        _text={{ color: "blue.800" }}
+                      >
+                        {goal}
+                      </Badge>
+                    ))}
+                  </HStack>
+                </FormControl>
+
+                {/* Health Conditions Section - Same pattern */}
+                <FormControl mt={4}>
+                  <FormControl.Label>Health Conditions</FormControl.Label>
+                  <Input
+                    value={conditionSearch}
+                    onChangeText={setConditionSearch}
+                    placeholder="Type and press Enter to add..."
+                    isDisabled={privateMode}
+                    onSubmitEditing={() => {
+                      const val = conditionSearch.trim();
+                      if (val && !editConditions.includes(val)) {
+                        setEditConditions([...editConditions, val]);
+                      }
+                      setConditionSearch("");
+                    }}
+                    returnKeyType="done"
+                  />
+                  {/* Suggestions */}
+                  {conditionSearch && (
+                    <Box mt={2} maxH={100} overflow="hidden">
+                      <ScrollView>
+                        {mockData.commonConditions
+                          .filter(
+                            (cond) =>
+                              cond
+                                .toLowerCase()
+                                .includes(conditionSearch.toLowerCase()) &&
+                              !editConditions.includes(cond)
+                          )
+                          .map((cond) => (
+                            <Pressable
+                              key={cond}
+                              onPress={() => {
+                                setEditConditions([...editConditions, cond]);
+                                setConditionSearch("");
+                              }}
+                              p={2}
+                              borderBottomWidth={1}
+                              borderColor="gray.100"
+                            >
+                              <Text>{cond}</Text>
+                            </Pressable>
+                          ))}
+                      </ScrollView>
+                    </Box>
+                  )}
+                  {/* Chips */}
+                  <HStack flexWrap="wrap" mt={2}>
+                    {filterValidTags(editConditions).map((cond) => (
+                      <Badge
+                        key={cond}
+                        bg="orange.100"
+                        px={2}
+                        py={1}
+                        rounded="full"
+                        m={1}
+                        _text={{ color: "orange.800" }}
+                      >
+                        {cond}
+                      </Badge>
+                    ))}
+                  </HStack>
+                </FormControl>
+
+                {/* Known Allergies Section - Same pattern */}
+                <FormControl mt={4}>
+                  <FormControl.Label>Known Allergies</FormControl.Label>
+                  <Input
+                    value={newAllergy}
+                    onChangeText={setNewAllergy}
+                    placeholder="Type and press Enter to add..."
+                    isDisabled={privateMode}
+                    onSubmitEditing={() => {
+                      const val = newAllergy.trim();
+                      if (val && !allergies.includes(val)) {
+                        setAllergies([...allergies, val]);
+                      }
+                      setNewAllergy("");
+                    }}
+                    returnKeyType="done"
+                  />
+                  {/* Chips */}
+                  <HStack flexWrap="wrap" mt={2}>
+                    {filterValidTags(allergies).map((allergy) => (
+                      <Badge
+                        key={allergy}
+                        bg="red.100"
+                        px={2}
+                        py={1}
+                        rounded="full"
+                        m={1}
+                        _text={{ color: "red.800" }}
+                      >
+                        {allergy}
+                      </Badge>
+                    ))}
+                  </HStack>
+                </FormControl>
+
+                {/* Guest Mode Switch */}
+                <FormControl>
+                  <FormControl.Label>Guest Mode</FormControl.Label>
+                  <HStack space={2} alignItems="center">
+                    <Switch
+                      value={privateMode}
+                      onValueChange={setPrivateMode}
+                      trackColor={{ false: colors.gray[200], true: "#007AFF" }}
+                      thumbColor={privateMode ? "white" : colors.gray[400]}
+                    />
+                    <Text color={privateMode ? "primary.500" : "gray.700"}>
+                      {privateMode ? "On" : "Off"}
+                    </Text>
+                  </HStack>
+                  <Text color="gray.500" fontSize="xs" mt={1}>
+                    Guest mode allows you to use the app without creating an
+                    account. Your data stays on your device and is not synced to
+                    the cloud.
+                  </Text>
+                </FormControl>
+              </VStack>
+            </ScrollView>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <HStack space={2} px={4} py={2} w="100%">
+              <Button
+                flex={1}
+                variant="outline"
+                bg="#8E8E93"
+                _text={{ color: "white" }}
+                onPress={() => setShowEditProfile(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                flex={1}
+                bg="#007AFF"
+                _text={{ color: "white" }}
+                onPress={() => {
+                  setUser({
+                    ...user,
+                    name: editName,
+                    age: parseInt(editAge, 10),
+                    goals: editGoals,
+                    conditions: editConditions,
+                    allergies: allergies,
+                    sex: editGender,
+                  });
+                  setShowEditProfile(false);
+                }}
+                isDisabled={privateMode}
+              >
+                Save
+              </Button>
+            </HStack>
+          </Modal.Footer>
+        </Modal.Content>
+      </SafeAreaView>
     </Modal>
   );
 
@@ -442,21 +716,28 @@ export const ProfileScreen = () => {
             <FormControl>
               <FormControl.Label>Type</FormControl.Label>
               <HStack space={2} mt={2}>
-                {['Prescription', 'Supplement'].map((type) => (
+                {["Prescription", "Supplement"].map((type) => (
                   <Pressable
                     key={type}
                     onPress={() => setEditMedType(type)}
                     style={{
-                      backgroundColor: editMedType === type ? colors.primary[100] : 'white',
+                      backgroundColor:
+                        editMedType === type ? colors.primary[100] : "white",
                       borderRadius: 16,
                       borderWidth: editMedType === type ? 2 : 1,
-                      borderColor: editMedType === type ? colors.primary[500] : colors.gray[200],
+                      borderColor:
+                        editMedType === type
+                          ? colors.primary[500]
+                          : colors.gray[200],
                       paddingHorizontal: 16,
                       paddingVertical: 8,
                       marginRight: 4,
                     }}
                   >
-                    <Text color={editMedType === type ? 'primary.700' : 'gray.700'} fontWeight={editMedType === type ? 'bold' : 'normal'}>
+                    <Text
+                      color={editMedType === type ? "primary.700" : "gray.700"}
+                      fontWeight={editMedType === type ? "bold" : "normal"}
+                    >
                       {type}
                     </Text>
                   </Pressable>
@@ -466,21 +747,32 @@ export const ProfileScreen = () => {
             <FormControl>
               <FormControl.Label>Status</FormControl.Label>
               <HStack space={2} mt={2}>
-                {['Active', 'Inactive'].map((status) => (
+                {["Active", "Inactive"].map((status) => (
                   <Pressable
                     key={status}
                     onPress={() => setEditMedStatus(status)}
                     style={{
-                      backgroundColor: editMedStatus === status ? colors.success[100] : 'white',
+                      backgroundColor:
+                        editMedStatus === status
+                          ? colors.success[100]
+                          : "white",
                       borderRadius: 16,
                       borderWidth: editMedStatus === status ? 2 : 1,
-                      borderColor: editMedStatus === status ? colors.success[500] : colors.gray[200],
+                      borderColor:
+                        editMedStatus === status
+                          ? colors.success[500]
+                          : colors.gray[200],
                       paddingHorizontal: 16,
                       paddingVertical: 8,
                       marginRight: 4,
                     }}
                   >
-                    <Text color={editMedStatus === status ? 'success.700' : 'gray.700'} fontWeight={editMedStatus === status ? 'bold' : 'normal'}>
+                    <Text
+                      color={
+                        editMedStatus === status ? "success.700" : "gray.700"
+                      }
+                      fontWeight={editMedStatus === status ? "bold" : "normal"}
+                    >
                       {status}
                     </Text>
                   </Pressable>
@@ -499,7 +791,11 @@ export const ProfileScreen = () => {
         </Modal.Body>
         <Modal.Footer>
           <HStack space={2}>
-            <Button flex={1} bg="#8E8E93" onPress={() => setEditMedModal(false)}>
+            <Button
+              flex={1}
+              bg="#8E8E93"
+              onPress={() => setEditMedModal(false)}
+            >
               Cancel
             </Button>
             <Button flex={1} bg="#007AFF" onPress={saveEditMed}>
@@ -512,7 +808,10 @@ export const ProfileScreen = () => {
   );
 
   const renderDeleteConfirmModal = () => (
-    <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
+    <Modal
+      isOpen={showDeleteConfirm}
+      onClose={() => setShowDeleteConfirm(false)}
+    >
       <Modal.Content>
         <Modal.CloseButton />
         <Modal.Header>Delete Medication/Supplement</Modal.Header>
@@ -521,7 +820,11 @@ export const ProfileScreen = () => {
         </Modal.Body>
         <Modal.Footer>
           <HStack space={2}>
-            <Button flex={1} bg="#8E8E93" onPress={() => setShowDeleteConfirm(false)}>
+            <Button
+              flex={1}
+              bg="#8E8E93"
+              onPress={() => setShowDeleteConfirm(false)}
+            >
               Cancel
             </Button>
             <Button flex={1} bg="#FF3B30" onPress={confirmDeleteMed}>
@@ -533,11 +836,24 @@ export const ProfileScreen = () => {
     </Modal>
   );
 
+  // Sync edit states with user when opening edit modal
+  const openEditProfile = () => {
+    setEditName(user.name);
+    setEditAge(user.age?.toString());
+    setEditGoals(user.goals || []);
+    setEditConditions(user.conditions || []);
+    setEditGender(user.sex);
+    setAllergies(user.allergies || []);
+    setShowEditProfile(true);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.gray[50] }}>
       <Box flex={1} px={4} pt={2}>
         <HStack mb={2} alignItems="center" justifyContent="space-between">
-          <Text fontSize="lg" fontWeight="bold">Profile</Text>
+          <Text fontSize="lg" fontWeight="bold">
+            Profile
+          </Text>
           <HStack alignItems="center" space={2}>
             <Switch
               value={privateMode}
@@ -545,27 +861,41 @@ export const ProfileScreen = () => {
               trackColor={{ false: colors.gray[200], true: colors.info[100] }}
               thumbColor={privateMode ? colors.info[200] : colors.gray[400]}
             />
-            <Text color={privateMode ? colors.primary[500] : colors.gray[700]}>{privateMode ? 'Private Mode: On' : 'Private Mode: Off'}</Text>
+            <Text color={privateMode ? colors.primary[500] : colors.gray[700]}>
+              {privateMode ? "Private Mode: On" : "Private Mode: Off"}
+            </Text>
           </HStack>
         </HStack>
-        <Text color="gray.500" fontSize="xs" mb={2}>Private mode: Data stays on device, no cloud sync.</Text>
+        <Text color="gray.500" fontSize="xs" mb={2}>
+          Private mode: Data stays on device, no cloud sync.
+        </Text>
         {renderProfileHeader()}
         <HStack mb={2} alignItems="center" justifyContent="space-between">
-          <Text fontSize="lg" fontWeight="bold">Medications & Supplements</Text>
+          <Text fontSize="lg" fontWeight="bold">
+            Medications & Supplements
+          </Text>
           <Button
             size="sm"
-            variant={showInactive ? 'solid' : 'outline'}
+            variant={showInactive ? "solid" : "outline"}
             rounded="full"
             px={3}
             py={1}
             onPress={() => setShowInactive((prev) => !prev)}
             isDisabled={privateMode}
           >
-            {showInactive ? 'Show Active' : 'Show Inactive?'}
+            {showInactive ? "Show Active" : "Show Inactive?"}
           </Button>
         </HStack>
         <FlatList
-          data={privateMode ? [] : user.stack.filter((item) => showInactive ? item.status === 'Inactive' : item.status === 'Active')}
+          data={
+            privateMode
+              ? []
+              : user.stack.filter((item) =>
+                  showInactive
+                    ? item.status === "Inactive"
+                    : item.status === "Active"
+                )
+          }
           renderItem={renderMedicationItem}
           keyExtractor={(_, idx) => idx.toString()}
           showsVerticalScrollIndicator={false}
@@ -573,7 +903,98 @@ export const ProfileScreen = () => {
         {renderEditProfileModal()}
         {renderEditMedModal()}
         {renderDeleteConfirmModal()}
+
+        {/* Browse More Modals */}
+        <Modal isOpen={showMoreGoals} onClose={() => setShowMoreGoals(false)}>
+          <Modal.Content>
+            <Modal.Header>Browse Health Goals</Modal.Header>
+            <Modal.Body>
+              <ScrollView>
+                {mockData.commonGoals.map((goal) => (
+                  <Pressable
+                    key={goal}
+                    onPress={() => {
+                      if (!editGoals.includes(goal)) {
+                        setEditGoals([...editGoals, goal]);
+                      }
+                      setShowMoreGoals(false);
+                    }}
+                  >
+                    <Box
+                      py={2}
+                      px={4}
+                      borderBottomWidth={1}
+                      borderColor="gray.100"
+                    >
+                      <Text>{goal}</Text>
+                    </Box>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Modal.Body>
+          </Modal.Content>
+        </Modal>
+
+        <Modal
+          isOpen={showMoreConditions}
+          onClose={() => setShowMoreConditions(false)}
+        >
+          <Modal.Content>
+            <Modal.Header>Browse Health Conditions</Modal.Header>
+            <Modal.Body>
+              <ScrollView>
+                {mockData.commonConditions.map((condition) => (
+                  <Pressable
+                    key={condition}
+                    onPress={() => {
+                      if (!editConditions.includes(condition)) {
+                        setEditConditions([...editConditions, condition]);
+                      }
+                      setShowMoreConditions(false);
+                    }}
+                  >
+                    <Box
+                      py={2}
+                      px={4}
+                      borderBottomWidth={1}
+                      borderColor="gray.100"
+                    >
+                      <Text>{condition}</Text>
+                    </Box>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Modal.Body>
+          </Modal.Content>
+        </Modal>
+
+        <Modal
+          isOpen={showMoreAllergies}
+          onClose={() => setShowMoreAllergies(false)}
+        >
+          <Modal.Content>
+            <Modal.Header>Browse Allergies</Modal.Header>
+            <Modal.Body>
+              <ScrollView>
+                <VStack space={2}>
+                  <Input
+                    value={newAllergy}
+                    onChangeText={setNewAllergy}
+                    placeholder="Enter new allergy"
+                    InputRightElement={
+                      <IconButton
+                        icon={<Plus color={colors.danger[500]} size={20} />}
+                        onPress={addAllergy}
+                        isDisabled={!newAllergy}
+                      />
+                    }
+                  />
+                </VStack>
+              </ScrollView>
+            </Modal.Body>
+          </Modal.Content>
+        </Modal>
       </Box>
     </SafeAreaView>
   );
-} 
+};
