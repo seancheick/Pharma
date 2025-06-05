@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "PharmaGuide",
+    "slug": "PharmaGuide",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "fonts": {
+      "body": {
+        "normal": "./assets/fonts/Inter-Regular.ttf",
+        "medium": "./assets/fonts/Inter-Medium.ttf",
+        "bold": "./assets/fonts/Inter-Bold.ttf"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
