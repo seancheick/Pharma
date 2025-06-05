@@ -271,21 +271,36 @@ export const HomeScreen = () => {
                   Cost: ~${item.cost}/month
                 </Text>
                 <HStack space={1} mt={1} flexWrap="wrap">
-                  {item.badges?.map((badge, index) => (
-                    <Badge
-                      key={index}
-                      bg="primary.50"
-                      px={2}
-                      py={0.5}
-                      rounded="full"
-                      mr={1}
-                      mb={1}
-                    >
-                      <Text color="primary.500" fontSize="xs">
+                  {item.badges?.map((badge, index) => {
+                    let bg, textColor;
+                    if (badge === "DailyMed") {
+                      bg = "blue.100";
+                      textColor = "blue.800";
+                    } else if (badge === "PubMed") {
+                      bg = "green.100";
+                      textColor = "green.800";
+                    } else if (badge === "AI Summary") {
+                      bg = "purple.100";
+                      textColor = "purple.800";
+                    } else {
+                      bg = "yellow.100";
+                      textColor = "yellow.800";
+                    }
+                    return (
+                      <Badge
+                        key={index}
+                        bg={bg}
+                        px={2}
+                        py={0.5}
+                        rounded="full"
+                        mr={1}
+                        mb={1}
+                        _text={{ color: textColor, fontSize: "xs" }}
+                      >
                         {badge}
-                      </Text>
-                    </Badge>
-                  ))}
+                      </Badge>
+                    );
+                  })}
                 </HStack>
                 <HStack space={2} mt={2} justifyContent="center">
                   <Button
@@ -344,26 +359,123 @@ export const HomeScreen = () => {
 
   const renderTrending = () => (
     <VStack space={2} mb={4}>
-      <Text fontSize="lg" fontWeight="bold">
+      <Text fontSize="lg" fontWeight="bold" mb={2}>
         What's Trending?
       </Text>
       <FlatList
         horizontal
-        data={mockData.trending}
+        data={mockData.trending.map(trendItem => {
+          // Convert trend text to a proper item object
+          const [name, ...restOfTrend] = trendItem.split(' ');
+          return {
+            name,
+            type: "Supplement",
+            score: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
+            risk: "Popular choice, check interactions",
+            cost: Math.floor(Math.random() * 30) + 10, // Random cost between 10-40
+            badges: ["DailyMed", "PubMed"],
+            source: "Trending"
+          };
+        })}
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingLeft: 2, paddingRight: 16 }}
         renderItem={({ item }) => (
-          <AnimatedBox
-            entering={FadeIn}
-            bg="white"
-            p={4}
-            rounded="lg"
-            shadow={1}
-            mr={4}
-          >
-            <Text>{item}</Text>
-          </AnimatedBox>
+          <Pressable onPress={() => handleItemSelect(item)}>
+            <AnimatedBox
+              entering={FadeIn}
+              bg="white"
+              p={4}
+              rounded="2xl"
+              shadow={2}
+              mr={4}
+              w={240}
+              minH={180}
+              justifyContent="space-between"
+            >
+              <VStack space={2}>
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text fontSize="md" fontWeight="bold">
+                    {item.name}
+                  </Text>
+                  {item.type === "Supplement" && (
+                    <HStack alignItems="center" space={1}>
+                      <Box
+                        w={8}
+                        h={8}
+                        rounded="full"
+                        bg={SCORE_COLORS(item.score)}
+                        mr={1}
+                      />
+                      <Text fontWeight="bold" color={SCORE_COLORS(item.score)}>
+                        {item.score}/100
+                      </Text>
+                    </HStack>
+                  )}
+                </HStack>
+                <Text color="gray.600" fontSize="sm">
+                  {item.risk}
+                </Text>
+                <Text color="gray.600" fontSize="xs">
+                  Cost: ~${item.cost}/month
+                </Text>
+                <HStack space={1} mt={1} flexWrap="wrap">
+                  {item.badges?.map((badge, index) => {
+                    let bg, textColor;
+                    if (badge === "DailyMed") {
+                      bg = "blue.100";
+                      textColor = "blue.800";
+                    } else if (badge === "PubMed") {
+                      bg = "green.100";
+                      textColor = "green.800";
+                    } else if (badge === "AI Summary") {
+                      bg = "purple.100";
+                      textColor = "purple.800";
+                    } else {
+                      bg = "yellow.100";
+                      textColor = "yellow.800";
+                    }
+                    return (
+                      <Badge
+                        key={index}
+                        bg={bg}
+                        px={2}
+                        py={0.5}
+                        rounded="full"
+                        mr={1}
+                        mb={1}
+                        _text={{ color: textColor, fontSize: "xs" }}
+                      >
+                        {badge}
+                      </Badge>
+                    );
+                  })}
+                </HStack>
+                <HStack space={2} mt={2} justifyContent="center">
+                  <Button
+                    size="xs"
+                    variant={feedback[item.name] === "up" ? "solid" : "outline"}
+                    px={2}
+                    py={1}
+                    rounded="full"
+                    onPress={() => handleFeedback(item.name, "up")}
+                  >
+                    👍 Helpful
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant={feedback[item.name] === "down" ? "solid" : "outline"}
+                    px={2}
+                    py={1}
+                    rounded="full"
+                    onPress={() => handleFeedback(item.name, "down")}
+                  >
+                    👎 Not Helpful
+                  </Button>
+                </HStack>
+              </VStack>
+            </AnimatedBox>
+          </Pressable>
         )}
-        keyExtractor={(_, idx) => idx.toString()}
       />
     </VStack>
   );
