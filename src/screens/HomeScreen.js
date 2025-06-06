@@ -17,7 +17,7 @@ import {
 import { Barcode, Search } from "lucide-react-native";
 import { mockData } from "../data/mockData";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { ScanModal } from "../components/ScanModal";
+import { DetailsModal } from "../components/DetailsModal";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
@@ -33,13 +33,13 @@ export const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [showScanModal, setShowScanModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [recentScans, setRecentScans] = useState(mockData.recent_scans);
   const [feedback, setFeedback] = useState({});
 
   const handleItemSelect = (item) => {
     setSelectedItem(item);
-    setShowScanModal(true);
+    setShowDetailsModal(true);
     setShowSuggestions(false);
   };
 
@@ -102,7 +102,6 @@ export const HomeScreen = () => {
           ml={2}
           onPress={() => {
             setSelectedItem(mockData.recent_scans[0]);
-            setShowScanModal(true);
           }}
         />
       </HStack>
@@ -223,84 +222,68 @@ export const HomeScreen = () => {
 
   const renderRecentScans = () => (
     <VStack space={2} mb={4}>
-      <Text fontSize="lg" fontWeight="bold" mb={2}>
+      <Text fontSize="lg" fontWeight="bold">
         Recent Scans
       </Text>
       <FlatList
-        horizontal
         data={recentScans}
+        horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 2, paddingRight: 16 }}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleItemSelect(item)}>
             <AnimatedBox
               entering={FadeIn}
               bg="white"
               p={4}
-              rounded="2xl"
-              shadow={2}
-              mr={4}
-              w={240}
-              minH={180}
-              justifyContent="space-between"
+              rounded="lg"
+              shadow={1}
+              mr={3}
+              width={280}
             >
               <VStack space={2}>
-                <HStack justifyContent="space-between" alignItems="center">
+                <Text fontSize="lg" fontWeight="bold">
+                  {item.name}
+                </Text>
+                <HStack alignItems="center" space={2}>
                   <Text fontSize="md" fontWeight="bold">
-                    {item.name}
+                    Score:
                   </Text>
-                  {item.type === "Supplement" && (
-                    <HStack alignItems="center" space={1}>
-                      <Box
-                        w={8}
-                        h={8}
-                        rounded="full"
-                        bg={SCORE_COLORS(item.score)}
-                        mr={1}
-                      />
-                      <Text fontWeight="bold" color={SCORE_COLORS(item.score)}>
-                        {item.score}/100
-                      </Text>
-                    </HStack>
-                  )}
+                  <Text
+                    fontSize="md"
+                    fontWeight="bold"
+                    color={SCORE_COLORS(item.score)}
+                  >
+                    {item.score}/100
+                  </Text>
                 </HStack>
-                <Text color="gray.600" fontSize="sm">
-                  {item.risk || item.feedback}
+                <Text color="gray.600" fontSize="sm" numberOfLines={2}>
+                  {item.risks}
                 </Text>
-                <Text color="gray.600" fontSize="xs">
-                  Cost: ~${item.cost}/month
-                </Text>
-                <HStack space={1} mt={1} flexWrap="wrap">
-                  {item.badges?.map((badge, index) => {
-                    let bg, textColor;
-                    if (badge === "DailyMed") {
-                      bg = "blue.100";
-                      textColor = "blue.800";
-                    } else if (badge === "PubMed") {
-                      bg = "green.100";
-                      textColor = "green.800";
-                    } else if (badge === "AI Summary") {
-                      bg = "purple.100";
-                      textColor = "purple.800";
-                    } else {
-                      bg = "yellow.100";
-                      textColor = "yellow.800";
-                    }
-                    return (
-                      <Badge
-                        key={index}
-                        bg={bg}
-                        px={2}
-                        py={0.5}
-                        rounded="full"
-                        mr={1}
-                        mb={1}
-                        _text={{ color: textColor, fontSize: "xs" }}
-                      >
-                        {badge}
-                      </Badge>
-                    );
-                  })}
+                <HStack space={1} flexWrap="wrap">
+                  {item.sources.map((source, idx) => (
+                    <Badge
+                      key={idx}
+                      bg={
+                        source === "DailyMed"
+                          ? "blue.100"
+                          : source === "PubMed"
+                          ? "green.100"
+                          : "purple.100"
+                      }
+                      rounded="full"
+                      m={0.5}
+                      _text={{
+                        color:
+                          source === "DailyMed"
+                            ? "blue.800"
+                            : source === "PubMed"
+                            ? "green.800"
+                            : "purple.800",
+                      }}
+                    >
+                      {source}
+                    </Badge>
+                  ))}
                 </HStack>
                 <HStack space={2} mt={2} justifyContent="center">
                   <Button
@@ -315,9 +298,7 @@ export const HomeScreen = () => {
                   </Button>
                   <Button
                     size="xs"
-                    variant={
-                      feedback[item.name] === "down" ? "solid" : "outline"
-                    }
+                    variant={feedback[item.name] === "down" ? "solid" : "outline"}
                     px={2}
                     py={1}
                     rounded="full"
@@ -359,96 +340,68 @@ export const HomeScreen = () => {
 
   const renderTrending = () => (
     <VStack space={2} mb={4}>
-      <Text fontSize="lg" fontWeight="bold" mb={2}>
-        What's Trending?
+      <Text fontSize="lg" fontWeight="bold">
+        Trending
       </Text>
       <FlatList
+        data={mockData.trending_items}
         horizontal
-        data={mockData.trending.map(trendItem => {
-          // Convert trend text to a proper item object
-          const [name, ...restOfTrend] = trendItem.split(' ');
-          return {
-            name,
-            type: "Supplement",
-            score: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
-            risk: "Popular choice, check interactions",
-            cost: Math.floor(Math.random() * 30) + 10, // Random cost between 10-40
-            badges: ["DailyMed", "PubMed"],
-            source: "Trending"
-          };
-        })}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 2, paddingRight: 16 }}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleItemSelect(item)}>
             <AnimatedBox
               entering={FadeIn}
               bg="white"
               p={4}
-              rounded="2xl"
-              shadow={2}
-              mr={4}
-              w={240}
-              minH={180}
-              justifyContent="space-between"
+              rounded="lg"
+              shadow={1}
+              mr={3}
+              width={280}
             >
               <VStack space={2}>
-                <HStack justifyContent="space-between" alignItems="center">
+                <Text fontSize="lg" fontWeight="bold">
+                  {item.name}
+                </Text>
+                <HStack alignItems="center" space={2}>
                   <Text fontSize="md" fontWeight="bold">
-                    {item.name}
+                    Score:
                   </Text>
-                  {item.type === "Supplement" && (
-                    <HStack alignItems="center" space={1}>
-                      <Box
-                        w={8}
-                        h={8}
-                        rounded="full"
-                        bg={SCORE_COLORS(item.score)}
-                        mr={1}
-                      />
-                      <Text fontWeight="bold" color={SCORE_COLORS(item.score)}>
-                        {item.score}/100
-                      </Text>
-                    </HStack>
-                  )}
+                  <Text
+                    fontSize="md"
+                    fontWeight="bold"
+                    color={SCORE_COLORS(item.score)}
+                  >
+                    {item.score}/100
+                  </Text>
                 </HStack>
-                <Text color="gray.600" fontSize="sm">
-                  {item.risk}
+                <Text color="gray.600" fontSize="sm" numberOfLines={2}>
+                  {item.risks}
                 </Text>
-                <Text color="gray.600" fontSize="xs">
-                  Cost: ~${item.cost}/month
-                </Text>
-                <HStack space={1} mt={1} flexWrap="wrap">
-                  {item.badges?.map((badge, index) => {
-                    let bg, textColor;
-                    if (badge === "DailyMed") {
-                      bg = "blue.100";
-                      textColor = "blue.800";
-                    } else if (badge === "PubMed") {
-                      bg = "green.100";
-                      textColor = "green.800";
-                    } else if (badge === "AI Summary") {
-                      bg = "purple.100";
-                      textColor = "purple.800";
-                    } else {
-                      bg = "yellow.100";
-                      textColor = "yellow.800";
-                    }
-                    return (
-                      <Badge
-                        key={index}
-                        bg={bg}
-                        px={2}
-                        py={0.5}
-                        rounded="full"
-                        mr={1}
-                        mb={1}
-                        _text={{ color: textColor, fontSize: "xs" }}
-                      >
-                        {badge}
-                      </Badge>
-                    );
-                  })}
+                <HStack space={1} flexWrap="wrap">
+                  {item.sources.map((source, idx) => (
+                    <Badge
+                      key={idx}
+                      bg={
+                        source === "DailyMed"
+                          ? "blue.100"
+                          : source === "PubMed"
+                          ? "green.100"
+                          : "purple.100"
+                      }
+                      rounded="full"
+                      m={0.5}
+                      _text={{
+                        color:
+                          source === "DailyMed"
+                            ? "blue.800"
+                            : source === "PubMed"
+                            ? "green.800"
+                            : "purple.800",
+                      }}
+                    >
+                      {source}
+                    </Badge>
+                  ))}
                 </HStack>
                 <HStack space={2} mt={2} justifyContent="center">
                   <Button
@@ -492,10 +445,14 @@ export const HomeScreen = () => {
           {renderTrending()}
         </Box>
       </ScrollView>
-      <ScanModal
-        isOpen={showScanModal}
-        onClose={() => setShowScanModal(false)}
+      <DetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
         item={selectedItem}
+        onLike={() => handleFeedback(selectedItem?.name, "up")}
+        onDislike={() => handleFeedback(selectedItem?.name, "down")}
+        liked={selectedItem && feedback[selectedItem.name] === "up"}
+        disliked={selectedItem && feedback[selectedItem.name] === "down"}
       />
     </SafeAreaView>
   );

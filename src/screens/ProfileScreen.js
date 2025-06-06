@@ -28,6 +28,7 @@ import { mockData } from "../data/mockData";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Switch, Alert } from "react-native";
+import { DetailsModal } from "../components/DetailsModal";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
@@ -79,6 +80,9 @@ export const ProfileScreen = () => {
   const [showMoreGoals, setShowMoreGoals] = useState(false);
   const [showMoreConditions, setShowMoreConditions] = useState(false);
   const [showMoreAllergies, setShowMoreAllergies] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [feedback, setFeedback] = useState({});
 
   const toggleGoal = (goal) => {
     setEditGoals((prev) =>
@@ -148,6 +152,16 @@ export const ProfileScreen = () => {
     setShowDeleteConfirm(false);
     setDeleteMedIndex(null);
   };
+
+  const handleItemSelect = (item) => {
+    setSelectedItem(item);
+    setShowDetailsModal(true);
+  };
+
+  const handleFeedback = (name, type) => {
+    setFeedback((prev) => ({ ...prev, [name]: type }));
+  };
+
   const renderProfileHeader = () => (
     <AnimatedBox
       entering={FadeIn}
@@ -273,67 +287,70 @@ export const ProfileScreen = () => {
   );
 
   const renderMedicationItem = ({ item, index }) => (
-    <AnimatedBox
-      entering={FadeIn}
-      bg="white"
-      p={3}
-      rounded="lg"
-      shadow={1}
-      mb={2}
-    >
-      <HStack justifyContent="space-between" alignItems="center">
-        <VStack>
-          <Text fontSize="md" fontWeight="bold">
-            {item.name}
-          </Text>
-          <Text color="gray.600" fontSize="sm">
-            Dosage: {item.dosage}
-          </Text>
-          <Text color="gray.600" fontSize="xs">
-            Start: {item.start}
-          </Text>
-          {item.end && (
-            <Text color="gray.600" fontSize="xs">
-              End: {item.end}
+    <Pressable onPress={() => !privateMode && handleItemSelect(item)} disabled={privateMode}>
+      <AnimatedBox
+        entering={FadeIn}
+        bg="white"
+        p={3}
+        rounded="lg"
+        shadow={1}
+        mb={2}
+        opacity={privateMode ? 0.5 : 1}
+      >
+        <HStack justifyContent="space-between" alignItems="center">
+          <VStack>
+            <Text fontSize="md" fontWeight="bold">
+              {item.name}
             </Text>
-          )}
-          <HStack flexWrap="wrap" mt={1}>
-            <Badge
-              bg={item.type === "Prescription" ? "blue.100" : "orange.100"}
-              rounded="full"
-              m={1}
-              _text={{ color: item.type === "Prescription" ? "blue.800" : "orange.800" }}
-            >
-              {item.type}
-            </Badge>
-            <Badge
-              bg={item.status === "Active" ? "green.100" : "gray.100"}
-              rounded="full"
-              m={1}
-              _text={{ color: item.status === "Active" ? "green.800" : "gray.800" }}
-            >
-              {item.status}
-            </Badge>
+            <Text color="gray.600" fontSize="sm">
+              Dosage: {item.dosage}
+            </Text>
+            <Text color="gray.600" fontSize="xs">
+              Start: {item.start}
+            </Text>
+            {item.end && (
+              <Text color="gray.600" fontSize="xs">
+                End: {item.end}
+              </Text>
+            )}
+            <HStack flexWrap="wrap" mt={1}>
+              <Badge
+                bg={item.type === "Prescription" ? "blue.100" : "orange.100"}
+                rounded="full"
+                m={1}
+                _text={{ color: item.type === "Prescription" ? "blue.800" : "orange.800" }}
+              >
+                {item.type}
+              </Badge>
+              <Badge
+                bg={item.status === "Active" ? "green.100" : "gray.100"}
+                rounded="full"
+                m={1}
+                _text={{ color: item.status === "Active" ? "green.800" : "gray.800" }}
+              >
+                {item.status}
+              </Badge>
+            </HStack>
+          </VStack>
+          <HStack space={1}>
+            <IconButton
+              icon={<Edit color={colors.primary[500]} size={18} />}
+              variant="ghost"
+              size="sm"
+              onPress={() => !privateMode && openEditMed(item, index)}
+              isDisabled={privateMode}
+            />
+            <IconButton
+              icon={<Trash2 color={colors.danger[500]} size={18} />}
+              variant="ghost"
+              size="sm"
+              onPress={() => !privateMode && openDeleteMed(index)}
+              isDisabled={privateMode}
+            />
           </HStack>
-        </VStack>
-        <HStack space={1}>
-          <IconButton
-            icon={<Edit color={colors.primary[500]} size={18} />}
-            variant="ghost"
-            size="sm"
-            onPress={() => !privateMode && openEditMed(item, index)}
-            isDisabled={privateMode}
-          />
-          <IconButton
-            icon={<Trash2 color={colors.danger[500]} size={18} />}
-            variant="ghost"
-            size="sm"
-            onPress={() => !privateMode && openDeleteMed(index)}
-            isDisabled={privateMode}
-          />
         </HStack>
-      </HStack>
-    </AnimatedBox>
+      </AnimatedBox>
+    </Pressable>
   );
 
   const renderEditProfileModal = () => (
@@ -982,6 +999,17 @@ export const ProfileScreen = () => {
             </Modal.Body>
           </Modal.Content>
         </Modal>
+
+        {/* Details Modal */}
+        <DetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          item={selectedItem}
+          onLike={() => handleFeedback(selectedItem?.name, "up")}
+          onDislike={() => handleFeedback(selectedItem?.name, "down")}
+          liked={selectedItem && feedback[selectedItem.name] === "up"}
+          disliked={selectedItem && feedback[selectedItem.name] === "down"}
+        />
       </Box>
     </SafeAreaView>
   );
