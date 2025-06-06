@@ -34,25 +34,37 @@ A cross-platform mobile app MVP prototype for health management, built with Reac
 
 ## Getting Started
 
-1. Install dependencies:
+### Prerequisites
+
+- Node.js
+- npm (Node Package Manager) or yarn
+- Expo CLI (`npm install -g expo-cli`)
+
+### Installation and Running
+
+1. Navigate to the project directory in your terminal.
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Start the development server:
+3. Start the development server:
 ```bash
 npm start
+# or npx expo start
 ```
 
-3. Run on iOS:
+4. To run the app on your device or simulator/emulator:
+   - For iOS:
 ```bash
 npm run ios
 ```
-
-4. Run on Android:
+   - For Android:
 ```bash
 npm run android
 ```
+
+Alternatively, you can scan the QR code displayed in the terminal or Expo Dev Tools web page using the Expo Go app on your phone.
 
 ## Project Structure
 
@@ -82,5 +94,7 @@ src/
 - The app uses a medical-themed UI with specific color codes
 - All components are built using NativeBase for consistent styling
 - Mock data is provided for demonstration purposes
-- The app is designed to work on both iOS and Android platforms # Pharma
+- The app is designed to work on both iOS and Android platforms
+
+# Pharma
 Ai Pharmacist
